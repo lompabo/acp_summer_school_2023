@@ -1,0 +1,11 @@
+numpy
+scipy
+matplotlib
+jupyter
+rise
+pandas
+scikit-learn
+tensorflow
+tensorflow-probability
+pydot
+ortools
