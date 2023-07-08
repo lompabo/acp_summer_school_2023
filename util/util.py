@@ -424,6 +424,7 @@ def generate_costs(nsamples, nitems, noise_scale=0,
             if noise_type == 'normal':
                 noise_dist = stats.norm(scale=noise_scale_vals)
             elif noise_type == 'rayleigh':
+                # noise_dist = stats.expon(scale=noise_scale_vals)
                 noise_dist = stats.rayleigh(scale=noise_scale_vals)
             r_mean = noise_dist.mean()
             # pnoise = noise * np.random.randn(nsamples)
@@ -508,6 +509,7 @@ def train_nn_model(model, X, y, loss,
     # Try to load the weights, if requested
     if load_weights:
         load_ml_model_weights(model, model.name)
+        return model
     # Compile the model
     model.compile(optimizer='Adam', loss=loss)
     # Build the early stop callback
@@ -563,7 +565,6 @@ def save_ml_model(model, name):
 def load_ml_model_weights(model, name):
     wgt_fname = os.path.join('data', f'{name}.h5')
     if os.path.exists(wgt_fname):
-        print('LOADING')
         model.load_weights(wgt_fname)
 
 
@@ -1018,10 +1019,15 @@ def train_dfl_model(model, X, y, tlim=None,
         validation_split=0.2, optimizer='Adam',
         save_weights=False,
         load_weights=False,
+        warm_start_pfl=None,
         **params):
     # Try to load the weights, if requested
     if load_weights:
         load_ml_model_weights(model, model.name)
+        return model
+    # Attempt a warm start
+    if warm_start_pfl is not None:
+        transfer_weights_to_dfl_model(warm_start_pfl, model)
     # Compile and train
     model.compile(optimizer=optimizer, run_eagerly=True)
     if validation_split > 0:
