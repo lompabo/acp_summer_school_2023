@@ -624,8 +624,6 @@ def generate_2s_problem(nitems, requirement, rel_buffer_cost,
 
 
 class ProductionProblem(object):
-    """Docstring for MarketProblem. """
-
     def __init__(self, values, requirement):
         """TODO: to be defined. """
         # Store the problem configuration
@@ -696,8 +694,6 @@ class ProductionProblem(object):
 
 
 class ProductionProblem2Stage(object):
-    """Docstring for MarketProblem. """
-
     def __init__(self, costs, requirement, buffer_cost, integer_vars=True):
         """TODO: to be defined. """
         # Store the problem configuration
@@ -984,7 +980,7 @@ def build_dfl_ml_model(input_size, output_size,
         problem, tlim=None, hidden=[], recompute_chance=1,
         output_activation='linear', loss_type='scr',
         sfge=False, sfge_sigma_init=1, sfge_sigma_trainable=False,
-        surrogate=False, name=None):
+        surrogate=False, standardize_loss=False, name=None):
     assert(not sfge or recompute_chance==1)
     assert(not sfge or loss_type in ('cost', 'regret', 'scr'))
     assert(sfge or loss_type in ('scr', 'spo', 'sc'))
@@ -1010,7 +1006,7 @@ def build_dfl_ml_model(input_size, output_size,
         model = SFGEModel(problem, tlim=tlim,
                     inputs=nnin, outputs=nnout, loss_type=loss_type,
                     sigma_init=sfge_sigma_init, sigma_trainable=sfge_sigma_trainable,
-                    surrogate=surrogate, name=name)
+                    surrogate=surrogate, standardize_loss=standardize_loss, name=name)
     return model
 
 
@@ -1164,6 +1160,7 @@ class SFGEModel(keras.Model):
                  sigma_init=1,
                  sigma_trainable=False,
                  surrogate=False,
+                 standardize_loss=False,
                  **params):
         super(SFGEModel, self).__init__(**params)
         assert(loss_type in ('cost', 'regret', 'scr'))
@@ -1173,6 +1170,7 @@ class SFGEModel(keras.Model):
         self.tlim = tlim
         self.loss_type = loss_type
         self.surrogate = surrogate
+        self.standardize_loss = standardize_loss
 
         # Prepare objects to handle Score Function Gradient Estimation
         self.log_sigma = tf.Variable(np.log(sigma_init), dtype=np.float32,
@@ -1265,6 +1263,11 @@ class SFGEModel(keras.Model):
                 loss_terms = objs - tobjs
             elif self.loss_type == 'scr':
                 loss_terms = (objs - tobj) + (tpobjs - pobjs)
+            # Apply standardization
+            if self.standardize_loss:
+                loss_term_mean = tf.reduce_mean(loss_terms).numpy()
+                loss_term_std = tf.math.reduce_std(loss_terms).numpy()
+                loss_terms = (loss_terms - loss_term_mean) / loss_term_std
             # Compute the mean loss
             loss = tf.reduce_mean(loss_terms * sample_logprobs)
 
@@ -1332,6 +1335,9 @@ class ProductionProblemSurrogate(object):
             return np.sum(terms)
 
     def solve_exact(self, costs, samples_per_item=11):
+
+
+
         # Quick access to some useful fields
         values = self.values
         req = self.requirement
@@ -1447,3 +1453,19 @@ def compute_regret_surrogate(problem, predictor, data, tlim=None,
     else:
         return actual_objs
 
+
+
+# def column_histograms(data, title=None):
+#     # Normalize all data
+#     ndata = (data - data.mean()) / data.std()
+#     # Compute histograms
+
+
+#     plt.imshow(y, cmap='Greys_r', origin='lower', aspect='auto')
+#     plt.xticks(ticks=np.linspace(0, y.shape[1]-1, nticks),
+#                labels=[f'{v:.1f}' for v in np.linspace(x_min, x_max, nticks)])
+#     plt.yticks(ticks=np.linspace(0, y.shape[0]-1, nticks),
+#                labels=[f'{v:.1f}' for v in np.linspace(w_min, w_max, nticks)])
+#     plt.xlabel('x')
+#     plt.ylabel('w')
+#     plt.title(title)
