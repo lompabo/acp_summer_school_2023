@@ -1,5 +1,5 @@
 import numpy as np
-
+import pickle
 from matplotlib import pyplot as plt
 from sklearn.linear_model import LinearRegression
 from scipy.stats import norm
@@ -508,8 +508,8 @@ def train_nn_model(model, X, y, loss,
         **fit_params):
     # Try to load the weights, if requested
     if load_weights:
-        load_ml_model_weights(model, model.name)
-        return model
+        history = load_ml_model_weights_and_history(model, model.name)
+        return history
     # Compile the model
     model.compile(optimizer='Adam', loss=loss)
     # Build the early stop callback
@@ -523,7 +523,7 @@ def train_nn_model(model, X, y, loss,
             verbose=verbose, **fit_params)
     # Save the model, if requested
     if save_weights:
-        save_ml_model_weights(model, model.name)
+        save_ml_model_weights_and_history(model, model.name, history)
     return history
 
 
@@ -550,9 +550,14 @@ def plot_training_history(history=None,
         print(s)
 
 
-def save_ml_model_weights(model, name):
+def save_ml_model_weights_and_history(model, name, history):
+    # Save names
     wgt_fname = os.path.join('data', f'{name}.h5')
     model.save_weights(wgt_fname)
+    # Save history
+    hst_fname = os.path.join('data', f'{name}.history')
+    with open(hst_fname, 'wb') as fp:
+        pickle.dump(history, fp)
 
 
 def save_ml_model(model, name):
@@ -562,10 +567,16 @@ def save_ml_model(model, name):
         f.write(model.to_json())
 
 
-def load_ml_model_weights(model, name):
+def load_ml_model_weights_and_history(model, name):
+    # Load weights
     wgt_fname = os.path.join('data', f'{name}.h5')
     if os.path.exists(wgt_fname):
         model.load_weights(wgt_fname)
+    # Load history
+    hst_fname = os.path.join('data', f'{name}.history')
+    with open(hst_fname, 'rb') as fp:
+        history = pickle.load(fp)
+    return history
 
 
 def load_ml_model(name):
@@ -1019,8 +1030,8 @@ def train_dfl_model(model, X, y, tlim=None,
         **params):
     # Try to load the weights, if requested
     if load_weights:
-        load_ml_model_weights(model, model.name)
-        return model
+        history = load_ml_model_weights(model, model.name)
+        return history
     # Attempt a warm start
     if warm_start_pfl is not None:
         transfer_weights_to_dfl_model(warm_start_pfl, model)
@@ -1037,7 +1048,7 @@ def train_dfl_model(model, X, y, tlim=None,
                      epochs=epochs, verbose=verbose, **params)
     # Save the model, if requested
     if save_weights:
-        save_ml_model_weights(model, model.name)
+        save_ml_model_weights_and_history(model, model.name, history)
     return history
 
 
