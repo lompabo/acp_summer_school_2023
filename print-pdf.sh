@@ -15,7 +15,7 @@ for nb in *.ipynb; do
     if [ -f "$out" ]; then
         echo "File \"$out\" already exists"
     else
-        decktape rise "http://127.0.0.1:8888/notebooks/$nb?token=$token&interactive-figures=false" -s 1600x900 "$out" --chrome-arg=--disable-web-security --chrome-arg=--disable-dev-shm-usage --chrome-path=/usr/bin/chromium
+        decktape rise "http://127.0.0.1:8888/notebooks/$nb?token=$token&interactive-figures=false" -s 1500x900 "$out" --chrome-arg=--disable-web-security --chrome-arg=--disable-dev-shm-usage --chrome-path=/usr/bin/chromium
     fi
 
 done
