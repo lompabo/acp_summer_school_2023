@@ -176,5 +176,13 @@
   text-align:center;
   /* padding-top: 1em; */
   margin-top:30%;
-  font-weight:bold
+  /* font-weight:bold */
+}
+
+.reveal .mbig {
+  font-size:1.2em;
+  text-align:center;
+  /* padding-top: 1em; */
+  margin-top:30%;
+  /* font-weight:bold */
 }
